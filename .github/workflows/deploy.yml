@@ -1,0 +1,36 @@
+# Deploy automático: a cada push na main, o GitHub entra na VPS e roda scripts/deploy.sh
+# Secrets necessários (Settings > Secrets and variables > Actions):
+#   VPS_HOST     IP da VPS
+#   VPS_USER     usuário (ryan)
+#   VPS_SSH_KEY  chave privada criada só para o deploy
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Configurar acesso SSH
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/deploy
+          chmod 600 ~/.ssh/deploy
+          ssh-keyscan -H "$VPS_HOST" >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Atualizar o sistema na VPS
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: ssh -i ~/.ssh/deploy "$VPS_USER@$VPS_HOST" deploy
