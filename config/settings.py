@@ -105,7 +105,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGIN_URL = "login"
 LOGIN_REDIRECT_URL = "inicio"
 LOGOUT_REDIRECT_URL = "login"
-SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # 30 dias logado no celular
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 30  # login vale 30 dias...
+SESSION_SAVE_EVERY_REQUEST = True  # ...contados a partir do último uso (renova sozinho)
 
 EMPRESA_NOME = env("EMPRESA_NOME", "Brasil Centro Automotivo")
 
