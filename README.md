@@ -121,7 +121,11 @@ Acesse `https://SEU_DOMINIO`. O certificado HTTPS é gerado sozinho na primeira 
 
 ### 2.4 Atualizar depois de uma mudança
 
-No PC: `git add . && git commit -m "descrição" && git push`. Na VPS:
+**Automático:** todo push na branch `main` dispara o GitHub Actions (`.github/workflows/deploy.yml`), que entra na VPS e roda `scripts/deploy.sh`. Acompanhe na aba **Actions** do repositório.
+
+Secrets usados (Settings → Secrets and variables → Actions): `VPS_HOST`, `VPS_USER` e `VPS_SSH_KEY`. A chave do deploy é restrita na VPS (`command=` no `authorized_keys`): ela só consegue rodar o deploy.
+
+**Manual** (se precisar):
 
 ```bash
 cd ~/oficina && bash scripts/deploy.sh
