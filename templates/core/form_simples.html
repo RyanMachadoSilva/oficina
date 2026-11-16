@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block titulo %}{{ titulo }} · {{ EMPRESA_NOME }}{% endblock %}
+{% block conteudo %}
+<div class="head"><div><h1>{{ titulo }}</h1><p><a href="{% url voltar %}">← Voltar</a></p></div></div>
+<form method="post" class="card form-dj" style="max-width:640px">{% csrf_token %}
+  {{ form.as_p }}
+  {% if nota %}<div class="note">{{ nota }}</div>{% endif %}
+  <div class="row" style="justify-content:flex-end"><a class="btn" href="{% url voltar %}">Cancelar</a><button type="submit" class="pri">Salvar</button></div>
+</form>
+{% endblock %}

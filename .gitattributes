@@ -1,0 +1,4 @@
+# Scripts precisam de quebra de linha Linux (LF), mesmo quando editados no Windows
+*.sh text eol=lf
+Caddyfile text eol=lf
+Dockerfile text eol=lf

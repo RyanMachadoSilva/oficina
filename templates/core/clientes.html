@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block titulo %}Clientes · {{ EMPRESA_NOME }}{% endblock %}
+{% block conteudo %}
+<div class="head"><div><h1>Clientes e veículos</h1><p>Busque por nome, telefone, CPF/CNPJ ou placa.</p></div><a class="btn pri" href="{% url 'cliente_novo' %}">+ Novo cliente</a></div>
+<div class="card">
+  <form class="bar" method="get"><label>Buscar<input name="q" value="{{ q }}" placeholder="Nome, telefone, CPF ou placa" autofocus></label><button type="submit">Buscar</button></form>
+  {% if pagina.object_list %}
+  <div class="scroll"><table class="stack"><thead><tr><th>Nome</th><th>Telefone</th><th>Veículos</th></tr></thead><tbody>
+  {% for c in pagina.object_list %}<tr class="click" data-href="{% url 'cliente_editar' c.pk %}">
+    <td data-l="Nome"><a href="{% url 'cliente_editar' c.pk %}"><b>{{ c.nome }}</b></a>{% if c.documento %}<div class="small mut">{{ c.documento }}</div>{% endif %}</td>
+    <td data-l="Telefone">{{ c.telefone }}</td>
+    <td data-l="Veículos">{% for v in c.veiculos.all %}{{ v }}{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="mut">—</span>{% endfor %}</td>
+  </tr>{% endfor %}</tbody></table></div>
+  {% include "core/_paginacao.html" %}
+  {% else %}<div class="empty">Nenhum cliente encontrado.</div>{% endif %}
+</div>
+{% endblock %}

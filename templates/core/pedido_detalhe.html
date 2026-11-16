@@ -1,0 +1,56 @@
+{% extends "base.html" %}{% load static oficina %}
+{% block titulo %}{{ p.numero }} · {{ EMPRESA_NOME }}{% endblock %}
+{% block conteudo %}
+<div class="head no-print"><div><h1>{{ p.numero }} <span class="tag s-{{ p.status }}" style="vertical-align:middle">{{ p.get_status_display }}</span></h1>
+  <p><a href="{% url 'pedidos' %}">← Voltar para pedidos</a></p></div>
+  <div class="row">
+    <button type="button" onclick="window.print()">Imprimir / PDF</button>
+    <button type="button" data-copiar="txt-zap" data-ok="Texto copiado. É só colar no WhatsApp.">Copiar p/ WhatsApp</button>
+    <a class="btn" href="{% url 'pedido_duplicar' p.pk %}">Duplicar</a>
+    <a class="btn pri" href="{% url 'pedido_editar' p.pk %}">Editar</a>
+  </div>
+</div>
+
+<form method="post" action="{% url 'pedido_status' p.pk %}" class="card no-print bar" style="margin-bottom:14px">{% csrf_token %}
+  <label>Status do pedido<select name="status">{% for v,l in status_opcoes %}<option value="{{ v }}"{% if p.status == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></label>
+  <button type="submit" class="pri">Alterar status</button>
+  <div class="small mut" style="flex:2 1 260px">Fluxo: Orçamento → Aprovado → Em execução → Finalizado → Pago</div>
+</form>
+
+<div class="doc">
+  <div class="dt">
+    <img alt="{{ EMPRESA_NOME }}" src="{% static 'img/logo.jpg' %}">
+    <div style="text-align:right"><h2>Orçamento {{ p.numero }}</h2>
+      <div class="small">Data {{ p.data|date:"d/m/Y" }}{% if p.validade %} · Válido até {{ p.validade|date:"d/m/Y" }}{% endif %}</div></div>
+  </div>
+  <div class="row" style="justify-content:space-between;margin-bottom:10px">
+    <div><div class="small" style="color:#5d635d">CLIENTE</div><b>{{ p.cliente.nome }}</b><div class="small">{{ p.cliente.telefone }}{% if p.cliente.documento %} · {{ p.cliente.documento }}{% endif %}</div></div>
+    <div><div class="small" style="color:#5d635d">VEÍCULO</div><b>{% if p.veiculo %}{{ p.veiculo.modelo }} {{ p.veiculo.ano }}{% else %}—{% endif %}</b><div class="small">{{ p.veiculo.placa }}</div></div>
+    <div><div class="small" style="color:#5d635d">MECÂNICO</div><b>{{ p.mecanico.nome|default:"—" }}</b></div>
+  </div>
+  <div class="scroll"><table>
+    <thead><tr><th>Descrição</th><th>Tipo</th><th class="r">Qtd</th><th class="r">Unitário</th><th class="r">Total</th></tr></thead>
+    <tbody>{% for i in p.itens.all %}<tr><td>{{ i.descricao }}</td><td><span class="tipo t-{{ i.tipo }}">{{ i.get_tipo_display }}</span></td><td class="r">{{ i.quantidade|num }}</td><td class="r">{{ i.preco_unitario|brl }}</td><td class="r">{{ i.total|brl }}</td></tr>{% endfor %}</tbody>
+  </table></div>
+  <div class="tot">
+    <div><span>Peças</span><span>{{ t.pecas|brl }}</span></div>
+    <div><span>Serviços</span><span>{{ t.servicos|brl }}</span></div>
+    <div><span>Subtotal</span><b>{{ t.subtotal|brl }}</b></div>
+    <div><span>ISS {{ p.iss_percentual|num }}%</span><span>{{ t.iss|brl }}</span></div>
+    <div class="big"><span>Total</span><span>{{ t.total|brl }}</span></div>
+  </div>
+  {% if p.observacao %}<p class="small"><b>Obs.:</b> {{ p.observacao|linebreaksbr }}</p>{% endif %}
+  <p class="small" style="color:#5d635d">Este documento não substitui a Nota Fiscal.</p>
+</div>
+
+<div class="grid g2 no-print" style="margin-top:14px">
+  <div class="card"><h3 style="margin-bottom:8px">Histórico</h3>
+    {% for h in p.historico.all %}<div class="small">{{ h.em|date:"d/m/Y H:i" }} · <span class="tag s-{{ h.status }}">{{ h.get_status_display }}</span> {% if h.usuario %}por {{ h.usuario.username }}{% endif %}</div>{% empty %}<div class="small mut">Sem registros.</div>{% endfor %}
+  </div>
+  <div class="card"><h3 style="margin-bottom:8px">Excluir pedido</h3>
+    <p class="small mut">Só para orçamentos lançados por engano. Pedidos finalizados ou pagos devem ir para Cancelado.</p>
+    <form method="post" action="{% url 'pedido_excluir' p.pk %}">{% csrf_token %}<button type="submit" class="del" data-confirmar="Clique de novo para excluir">Excluir</button></form>
+  </div>
+</div>
+<textarea id="txt-zap" hidden>{{ texto_whatsapp }}</textarea>
+{% endblock %}

@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block titulo %}{% if cliente %}{{ cliente.nome }}{% else %}Novo cliente{% endif %} · {{ EMPRESA_NOME }}{% endblock %}
+{% block conteudo %}
+<div class="head"><div><h1>{% if cliente %}{{ cliente.nome }}{% else %}Novo cliente{% endif %}</h1><p><a href="{% url 'clientes' %}">← Voltar para clientes</a></p></div>
+  {% if cliente %}<a class="btn" href="{% url 'pedidos' %}?cliente={{ cliente.pk }}">Ver pedidos ({{ total_pedidos }})</a>{% endif %}</div>
+<form method="post" id="form-cliente">{% csrf_token %}
+<div class="card">
+  {% if form.errors %}<div class="erros">Confira os campos destacados.</div>{% endif %}
+  <div class="f">
+    <label class="w2">Nome / razão social *{{ form.nome }}{{ form.nome.errors }}</label>
+    <label>Telefone / WhatsApp{{ form.telefone }}</label>
+    <label>CPF / CNPJ{{ form.documento }}</label>
+    <label>E-mail{{ form.email }}{{ form.email.errors }}</label>
+    <label class="w2">Endereço{{ form.endereco }}</label>
+    <label class="w2">Observação{{ form.observacao }}</label>
+  </div>
+</div>
+
+<div class="card" style="margin-top:14px"><h2 style="margin-bottom:10px">Veículos</h2>
+  {% if veiculos %}<div class="scroll"><table><tbody>
+    {% for v in veiculos %}<tr><td><b>{{ v.modelo }}</b> {{ v.ano }}</td><td>{{ v.placa }}</td><td>{{ v.cor }}</td>
+      <td class="r"><button type="submit" class="sm del" form="del-v{{ v.pk }}" data-confirmar="Confirmar">Remover</button></td></tr>{% endfor %}
+  </tbody></table></div>{% else %}<p class="small mut">Nenhum veículo cadastrado.</p>{% endif %}
+  <h3 style="margin:14px 0 8px">Adicionar veículo</h3>
+  <div class="f">
+    <label>Marca<select name="marca" id="v-marca"><option value="">Selecione</option>{% for m in marcas %}<option value="{{ m.pk }}">{{ m.nome }}</option>{% endfor %}<option value="__n">+ Outra marca</option></select>
+      <input name="nova_marca" id="v-nova-marca" placeholder="Nome da nova marca" style="display:none"></label>
+    <label>Modelo<select name="modelo" id="v-modelo"><option value="">Escolha a marca</option></select>
+      <input name="novo_modelo" id="v-novo-modelo" placeholder="Nome do novo modelo" style="display:none"></label>
+    <label>Ano<input name="ano" id="v-ano" inputmode="numeric" maxlength="9"></label>
+    <label>Placa<input name="placa" id="v-placa" style="text-transform:uppercase" maxlength="8"></label>
+    <label>Cor<input name="cor" id="v-cor"></label>
+  </div>
+  <p class="small mut">Preencha só se quiser incluir um veículo. Ele é salvo junto com o cliente.</p>
+</div>
+
+<div class="row" style="justify-content:flex-end;margin-top:14px">
+  <a class="btn" href="{% url 'clientes' %}">Cancelar</a>
+  <button type="submit" name="continuar" value="1">Salvar e continuar</button>
+  <button type="submit" class="pri">Salvar</button>
+</div>
+</form>
+{% for v in veiculos %}<form id="del-v{{ v.pk }}" method="post" action="{% url 'veiculo_excluir' v.pk %}">{% csrf_token %}</form>{% endfor %}
+{% if cliente %}
+<form method="post" action="{% url 'cliente_excluir' cliente.pk %}" style="margin-top:24px">{% csrf_token %}
+  <button type="submit" class="del sm" data-confirmar="Clique de novo para excluir o cliente">Excluir cliente</button></form>
+{% endif %}
+{% endblock %}
+{% block scripts %}<script>App.ligarCamposVeiculo();</script>{% endblock %}

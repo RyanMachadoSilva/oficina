@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block titulo %}Pedidos · {{ EMPRESA_NOME }}{% endblock %}
+{% block conteudo %}
+<div class="head"><div><h1>Pedidos</h1><p>Orçamentos e ordens de serviço.</p></div><a class="btn pri" href="{% url 'pedido_novo' %}">+ Novo orçamento</a></div>
+<div class="card">
+  <form class="bar" method="get" id="filtros">
+    <label>Buscar<input name="q" value="{{ f.q }}" placeholder="Número, placa ou cliente"></label>
+    <label>Status<select name="status" data-auto><option value="">Todos</option>{% for v,l in status_opcoes %}<option value="{{ v }}"{% if f.status == v %} selected{% endif %}>{{ l }}</option>{% endfor %}</select></label>
+    <label>Mecânico<select name="mecanico" data-auto><option value="">Todos</option>{% for m in mecanicos %}<option value="{{ m.pk }}"{% if f.mecanico == m.pk|stringformat:"s" %} selected{% endif %}>{{ m.nome }}</option>{% endfor %}</select></label>
+    <label>De<input type="date" name="de" value="{{ f.de }}" data-auto></label>
+    <label>Até<input type="date" name="ate" value="{{ f.ate }}" data-auto></label>
+    {% if cliente_sel %}<input type="hidden" name="cliente" value="{{ cliente_sel.pk }}">{% endif %}
+    <button type="submit">Filtrar</button>
+  </form>
+  {% if cliente_sel %}<p class="small">Mostrando só os pedidos de <b>{{ cliente_sel.nome }}</b>. <a href="{% url 'pedidos' %}">Ver todos</a></p>{% endif %}
+  {% include "core/_tabela_pedidos.html" with lista=pagina.object_list %}
+  {% include "core/_paginacao.html" %}
+</div>
+{% endblock %}

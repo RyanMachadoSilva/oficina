@@ -1,0 +1,52 @@
+{% load static %}<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block titulo %}{{ EMPRESA_NOME }}{% endblock %}</title>
+<meta name="theme-color" content="#0f120f">
+<link rel="manifest" href="{% url 'manifest' %}">
+<link rel="icon" href="{% static 'icons/icon-192.png' %}">
+<link rel="apple-touch-icon" href="{% static 'icons/icon-180.png' %}">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Oficina">
+<meta name="csrf-token" content="{{ csrf_token }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body>
+{% block corpo %}
+{% url 'inicio' as u_inicio %}{% url 'pedido_novo' as u_novo %}{% url 'pedidos' as u_pedidos %}{% url 'clientes' as u_clientes %}{% url 'mecanicos' as u_mecanicos %}{% url 'catalogo' as u_catalogo %}{% url 'relatorios' as u_relatorios %}
+<div class="app">
+<aside>
+  <a class="logo" href="{{ u_inicio }}"><img alt="{{ EMPRESA_NOME }}" src="{% static 'img/logo.jpg' %}"></a>
+  <nav>
+    <a href="{{ u_inicio }}" class="{% if request.path == u_inicio %}on{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l9-8 9 8v10h-6v-6H9v6H3z"/></svg>Início</a>
+    <a href="{{ u_novo }}" class="{% if request.path == u_novo %}on{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Novo orçamento</a>
+    <a href="{{ u_pedidos }}" class="{% if request.path != u_novo and u_pedidos in request.path %}on{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4h16v16H4zM8 9h8M8 13h8M8 17h5"/></svg>Pedidos</a>
+    <a href="{{ u_clientes }}" class="{% if u_clientes in request.path %}on{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 11a4 4 0 1 0-8 0 4 4 0 0 0 8 0zM4 21c1-4 4-6 8-6s7 2 8 6"/></svg>Clientes e veículos</a>
+    <a href="{{ u_mecanicos }}" class="{% if u_mecanicos in request.path %}on{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 7l3-3 3 3-3 3M14 7l-9 9 3 3 9-9"/></svg>Mecânicos</a>
+    <a href="{{ u_catalogo }}" class="{% if u_catalogo in request.path %}on{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6h16M4 12h16M4 18h10"/></svg>Peças e serviços</a>
+    <a href="{{ u_relatorios }}" class="{% if u_relatorios in request.path %}on{% endif %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Relatórios</a>
+    {% if user.is_staff %}<a href="{% url 'admin:index' %}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM4 12h2M18 12h2M12 4v2M12 18v2"/></svg>Configurações</a>{% endif %}
+    <form method="post" action="{% url 'logout' %}" class="nav-sair">{% csrf_token %}<button type="submit">Sair</button></form>
+  </nav>
+  <div class="side-foot">
+    <div class="user"><span>{{ user.get_full_name|default:user.username }}</span>
+      <form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Sair</button></form></div>
+  </div>
+</aside>
+<main>
+  {% if messages %}<div class="msgs">{% for m in messages %}<div class="msg {{ m.tags }}">{{ m }}</div>{% endfor %}</div>{% endif %}
+  {% block conteudo %}{% endblock %}
+</main>
+</div>
+<div class="ov" id="ov"><div class="modal" id="modal"></div></div>
+<div class="toast" id="toast"></div>
+{% endblock %}
+<script src="{% static 'js/app.js' %}"></script>
+{% block scripts %}{% endblock %}
+<script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){})}</script>
+</body>
+</html>

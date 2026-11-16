@@ -1,0 +1,18 @@
+{% load oficina %}
+{% if lista %}
+<div class="scroll"><table class="stack">
+<thead><tr><th>Número</th><th>Data</th><th>Cliente</th><th>Veículo</th><th>Mecânico</th><th class="r">Total</th><th>Status</th></tr></thead>
+<tbody>
+{% for p in lista %}{% with t=p.totais %}
+<tr class="click" data-href="{% url 'pedido_detalhe' p.pk %}">
+  <td data-l="Número"><a href="{% url 'pedido_detalhe' p.pk %}"><b>{{ p.numero }}</b></a></td>
+  <td data-l="Data">{{ p.data|date:"d/m/Y" }}</td>
+  <td data-l="Cliente">{{ p.cliente.nome }}</td>
+  <td data-l="Veículo">{{ p.veiculo|default:"—" }}</td>
+  <td data-l="Mecânico">{{ p.mecanico.nome|default:"—" }}</td>
+  <td class="r" data-l="Total">{{ t.total|brl }}</td>
+  <td data-l="Status"><span class="tag s-{{ p.status }}">{{ p.get_status_display }}</span></td>
+</tr>
+{% endwith %}{% endfor %}
+</tbody></table></div>
+{% else %}<div class="empty">Nenhum pedido encontrado.</div>{% endif %}

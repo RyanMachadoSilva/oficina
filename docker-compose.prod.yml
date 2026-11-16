@@ -1,0 +1,51 @@
+# Produção (VPS):  docker compose -f docker-compose.prod.yml up -d --build
+x-logs: &logs
+  logging:
+    driver: json-file
+    options:
+      max-size: "10m"
+      max-file: "3"
+
+services:
+  db:
+    image: postgres:16-alpine
+    env_file: .env
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      retries: 10
+    <<: *logs
+
+  app:
+    build: .
+    env_file: .env
+    environment:
+      DJANGO_DEBUG: "0"
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    <<: *logs
+
+  caddy:
+    image: caddy:2-alpine
+    env_file: .env
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    depends_on:
+      - app
+    <<: *logs
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:
