@@ -82,12 +82,12 @@
     const tb = $('#itens');
     if (!itens.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">Nenhum item ainda. Busque acima ou adicione um item avulso.</td></tr>'; totais(); return; }
     tb.innerHTML = itens.map((i, k) => `<tr>
-      <td><input data-i="${k}" data-f="descricao" value="${esc(i.descricao)}" placeholder="Descrição" maxlength="150"></td>
-      <td><select data-i="${k}" data-f="tipo"><option value="peca"${i.tipo === 'peca' ? ' selected' : ''}>Peça</option><option value="servico"${i.tipo === 'servico' ? ' selected' : ''}>Serviço</option></select></td>
-      <td><input data-i="${k}" data-f="quantidade" inputmode="numeric" maxlength="2" value="${esc(String(parseInt(num(i.quantidade)) || 1))}" style="text-align:right"></td>
-      <td><input data-i="${k}" data-f="preco_unitario" inputmode="decimal" maxlength="9" value="${esc(String(i.preco_unitario).replace('.', ','))}" style="text-align:right"></td>
-      <td class="r" id="lt${k}">${brl(num(i.quantidade) * num(i.preco_unitario))}</td>
-      <td><button type="button" class="sm del" data-rm="${k}" aria-label="Remover">✕</button></td></tr>`).join('');
+      <td class="c-desc" data-l="Descrição"><input data-i="${k}" data-f="descricao" value="${esc(i.descricao)}" placeholder="Descrição" maxlength="150"></td>
+      <td class="c-tipo" data-l="Tipo"><select data-i="${k}" data-f="tipo"><option value="peca"${i.tipo === 'peca' ? ' selected' : ''}>Peça</option><option value="servico"${i.tipo === 'servico' ? ' selected' : ''}>Serviço</option></select></td>
+      <td class="c-qtd" data-l="Qtd"><input data-i="${k}" data-f="quantidade" inputmode="numeric" maxlength="2" value="${esc(String(parseInt(num(i.quantidade)) || 1))}" style="text-align:right"></td>
+      <td class="c-preco" data-l="Unitário (R$)"><input data-i="${k}" data-f="preco_unitario" inputmode="decimal" maxlength="9" value="${esc(String(i.preco_unitario).replace('.', ','))}" style="text-align:right"></td>
+      <td class="r c-total" id="lt${k}">${brl(num(i.quantidade) * num(i.preco_unitario))}</td>
+      <td class="c-rm"><button type="button" class="sm del" data-rm="${k}" aria-label="Remover">✕</button></td></tr>`).join('');
     totais();
   }
   function totais() {
