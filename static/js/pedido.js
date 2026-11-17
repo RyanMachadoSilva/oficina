@@ -82,10 +82,10 @@
     const tb = $('#itens');
     if (!itens.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">Nenhum item ainda. Busque acima ou adicione um item avulso.</td></tr>'; totais(); return; }
     tb.innerHTML = itens.map((i, k) => `<tr>
-      <td><input data-i="${k}" data-f="descricao" value="${esc(i.descricao)}" placeholder="Descrição"></td>
+      <td><input data-i="${k}" data-f="descricao" value="${esc(i.descricao)}" placeholder="Descrição" maxlength="150"></td>
       <td><select data-i="${k}" data-f="tipo"><option value="peca"${i.tipo === 'peca' ? ' selected' : ''}>Peça</option><option value="servico"${i.tipo === 'servico' ? ' selected' : ''}>Serviço</option></select></td>
-      <td><input data-i="${k}" data-f="quantidade" inputmode="decimal" value="${esc(String(i.quantidade).replace('.', ','))}" style="text-align:right"></td>
-      <td><input data-i="${k}" data-f="preco_unitario" inputmode="decimal" value="${esc(String(i.preco_unitario).replace('.', ','))}" style="text-align:right"></td>
+      <td><input data-i="${k}" data-f="quantidade" inputmode="numeric" maxlength="2" value="${esc(String(parseInt(num(i.quantidade)) || 1))}" style="text-align:right"></td>
+      <td><input data-i="${k}" data-f="preco_unitario" inputmode="decimal" maxlength="9" value="${esc(String(i.preco_unitario).replace('.', ','))}" style="text-align:right"></td>
       <td class="r" id="lt${k}">${brl(num(i.quantidade) * num(i.preco_unitario))}</td>
       <td><button type="button" class="sm del" data-rm="${k}" aria-label="Remover">✕</button></td></tr>`).join('');
     totais();
@@ -96,8 +96,18 @@
     const sub = pc + sv, pct = num($('#iss').value), iss = Math.round((issBase === 'servicos' ? sv : sub) * pct) / 100;
     $('#totais').innerHTML = `<div><span>Peças</span><span>${brl(pc)}</span></div><div><span>Serviços</span><span>${brl(sv)}</span></div><div><span>Subtotal</span><b>${brl(sub)}</b></div><div><span>ISS ${esc($('#iss').value)}% ${issBase === 'servicos' ? '(só serviços)' : ''}</span><span>${brl(iss)}</span></div><div class="big"><span>Total</span><span>${brl(sub + iss)}</span></div>`;
   }
+  // Limites: quantidade até 99 (2 dígitos) e preço até 999.999,99 (6 dígitos antes da vírgula)
+  function limitar(t) {
+    if (t.dataset.f === 'quantidade') t.value = t.value.replace(/\D/g, '').slice(0, 2);
+    if (t.dataset.f === 'preco_unitario') {
+      const v = t.value.replace(/\./g, ',').replace(/[^\d,]/g, '');
+      const p = v.indexOf(',');
+      t.value = p < 0 ? v.slice(0, 6) : v.slice(0, p).slice(0, 6) + ',' + v.slice(p + 1).replace(/,/g, '').slice(0, 2);
+    }
+  }
   $('#itens').addEventListener('input', e => {
     const t = e.target; if (t.dataset.i === undefined) return;
+    limitar(t);
     const i = itens[+t.dataset.i]; i[t.dataset.f] = t.value;
     const lt = $('#lt' + t.dataset.i); if (lt) lt.textContent = brl(num(i.quantidade) * num(i.preco_unitario));
     totais();
@@ -129,6 +139,8 @@
     if (!cliente) { e.preventDefault(); toast('Selecione o cliente'); return; }
     const validos = itens.filter(i => String(i.descricao).trim());
     if (!validos.length) { e.preventDefault(); toast('Adicione pelo menos um item'); return; }
+    if (validos.some(i => { const q = num(i.quantidade); return q < 1 || q > 99 || q % 1; })) { e.preventDefault(); toast('Quantidade deve ser de 1 a 99'); return; }
+    if (validos.some(i => num(i.preco_unitario) < 0 || num(i.preco_unitario) > 999999.99)) { e.preventDefault(); toast('Preço máximo: R$ 999.999,99'); return; }
     $('#itens_json').value = JSON.stringify(validos.map(i => ({ ...i, quantidade: num(i.quantidade), preco_unitario: num(i.preco_unitario) })));
   });
   // Enter dentro de um campo não envia o formulário sem querer

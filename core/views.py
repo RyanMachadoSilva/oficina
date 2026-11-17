@@ -21,6 +21,9 @@ from .templatetags.oficina import brl, num
 
 
 # ---------------------------------------------------------------- utilidades
+QTD_MAX = 99                        # quantidade de itens iguais: até 2 dígitos
+PRECO_MAX = Decimal("999999.99")    # preço unitário: até 6 dígitos antes da vírgula
+
 def dec(valor, padrao="0"):
     """Converte texto digitado (145 / 145,50 / 1.234,56 / 145.5) em Decimal."""
     s = str(valor if valor not in (None, "") else padrao).strip()
@@ -139,6 +142,12 @@ def pedido_form(request, pk=None, duplicar_de=None):
             erros.append("Selecione o cliente.")
         if not itens:
             erros.append("Adicione pelo menos uma peça ou serviço.")
+        for i in itens:
+            q, p = dec(i.get("quantidade"), "1"), dec(i.get("preco_unitario"), "0")
+            if q < 1 or q > QTD_MAX or q != q.to_integral_value():
+                erros.append(f'Quantidade de "{str(i["descricao"])[:40]}" deve ser de 1 a {QTD_MAX}.')
+            if p < 0 or p > PRECO_MAX:
+                erros.append(f'Preço de "{str(i["descricao"])[:40]}" deve ser no máximo R$ 999.999,99.')
         if not erros:
             with transaction.atomic():
                 novo = pedido is None
