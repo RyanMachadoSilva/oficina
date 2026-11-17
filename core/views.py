@@ -85,8 +85,20 @@ def inicio(request):
         "andamento": cont[Status.APROVADO] + cont[Status.EXECUCAO],
         "a_receber": a_receber,
         "recebido_mes": recebido_mes,
-        "ultimos": pedidos_com_itens()[:8],
+        "abertos": abertos_ordenados(pedidos),
+        "status_abertos": [(s, l) for s, l in Status.choices if s in ABERTOS],
     })
+
+
+# Pedidos "em aberto": ainda não pagos nem cancelados, na ordem do fluxo de trabalho
+ABERTOS = [Status.EXECUCAO, Status.APROVADO, Status.ORCAMENTO, Status.FINALIZADO]
+
+
+def abertos_ordenados(pedidos):
+    ordem = {s: i for i, s in enumerate(ABERTOS)}
+    lista = [p for p in pedidos if p.status in ordem]
+    lista.sort(key=lambda p: (ordem[p.status], -p.data.toordinal(), -p.sequencia))
+    return lista
 
 
 # ---------------------------------------------------------------- pedidos

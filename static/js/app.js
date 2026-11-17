@@ -83,7 +83,27 @@ window.App = (function () {
     const cf = e.target.closest('[data-confirmar]');
     if (cf && !cf.dataset.ok2) { e.preventDefault(); cf.dataset.ok2 = '1'; cf.textContent = cf.dataset.confirmar; }
   }, true);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') fecharModal(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') { fecharModal(); fecharMenu(); } });
+
+  /* Menu lateral (☰): no celular abre por cima; no computador mostra/esconde e lembra a escolha */
+  const raiz = document.documentElement;
+  const celular = () => matchMedia('(max-width:820px)').matches;
+  function fecharMenu() { raiz.classList.remove('menu-aberto'); const b = $('#menu-btn'); if (b) b.setAttribute('aria-expanded', 'false'); }
+  const btnMenu = $('#menu-btn');
+  if (btnMenu) {
+    btnMenu.addEventListener('click', () => {
+      if (celular()) {
+        const aberto = raiz.classList.toggle('menu-aberto');
+        btnMenu.setAttribute('aria-expanded', String(aberto));
+      } else {
+        const fechado = raiz.classList.toggle('menu-fechado');
+        btnMenu.setAttribute('aria-expanded', String(!fechado));
+        try { localStorage.setItem('menu-fechado', fechado ? '1' : '0'); } catch (e) {}
+      }
+    });
+    const fundo = $('#menu-fundo'); if (fundo) fundo.addEventListener('click', fecharMenu);
+    document.querySelectorAll('#menu nav a').forEach(a => a.addEventListener('click', fecharMenu));
+  }
   document.addEventListener('change', e => { if (e.target.matches('[data-auto]')) e.target.form.submit(); });
 
   /* Navegação por teclado nas listas de busca (setas + Enter) */

@@ -9,7 +9,11 @@
   <div class="card kpi g"><div class="l">Recebido no mês</div><div class="n">{{ recebido_mes|brl }}</div></div>
 </div>
 <div class="card" style="margin-top:14px">
-  <div class="row" style="justify-content:space-between;margin-bottom:8px"><h2>Últimos pedidos</h2><a class="btn" href="{% url 'pedidos' %}">Ver todos</a></div>
-  {% include "core/_tabela_pedidos.html" with lista=ultimos %}
+  <div class="row" style="justify-content:space-between;margin-bottom:8px">
+    <h2>Pedidos em aberto <span class="mut" style="font-size:18px">({{ abertos|length }})</span></h2>
+    <a class="btn" href="{% url 'pedidos' %}">Todos os pedidos</a>
+  </div>
+  <p class="small mut" style="margin:0 0 10px">Em execução primeiro, depois aprovados, orçamentos aguardando e finalizados a receber. Pagos e cancelados ficam em <a href="{% url 'pedidos' %}">Pedidos</a>.</p>
+  {% include "core/_tabela_pedidos.html" with lista=abertos %}
 </div>
 {% endblock %}
