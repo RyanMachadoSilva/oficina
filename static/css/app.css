@@ -122,3 +122,7 @@ html.menu-fechado aside{display:none}
   main{padding-bottom:96px}
 }
 @media(prefers-reduced-motion:reduce){aside{transition:none}}
+
+/* célula com mais de uma informação (ex.: nome + CPF): uma embaixo da outra */
+.cel{display:flex;flex-direction:column;gap:2px}
+@media(max-width:600px){.stack .cel{align-items:flex-end;text-align:right}}

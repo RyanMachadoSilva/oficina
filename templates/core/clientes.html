@@ -7,9 +7,9 @@
   {% if pagina.object_list %}
   <div class="scroll"><table class="stack"><thead><tr><th>Nome</th><th>Telefone</th><th>Veículos</th></tr></thead><tbody>
   {% for c in pagina.object_list %}<tr class="click" data-href="{% url 'cliente_editar' c.pk %}">
-    <td data-l="Nome"><a href="{% url 'cliente_editar' c.pk %}"><b>{{ c.nome }}</b></a>{% if c.documento %}<div class="small mut">{{ c.documento }}</div>{% endif %}</td>
+    <td data-l="Nome"><span class="cel"><a href="{% url 'cliente_editar' c.pk %}"><b>{{ c.nome }}</b></a>{% if c.documento %}<span class="small mut">{{ c.documento }}</span>{% endif %}</span></td>
     <td data-l="Telefone">{{ c.telefone }}</td>
-    <td data-l="Veículos">{% for v in c.veiculos.all %}{{ v }}{% if not forloop.last %}<br>{% endif %}{% empty %}<span class="mut">—</span>{% endfor %}</td>
+    <td data-l="Veículos"><span class="cel">{% for v in c.veiculos.all %}<span>{{ v }}</span>{% empty %}<span class="mut">—</span>{% endfor %}</span></td>
   </tr>{% endfor %}</tbody></table></div>
   {% include "core/_paginacao.html" %}
   {% else %}<div class="empty">Nenhum cliente encontrado.</div>{% endif %}
