@@ -220,3 +220,15 @@ class HistoricoStatus(models.Model):
         ordering = ["em"]
         verbose_name = "histórico de status"
         verbose_name_plural = "histórico de status"
+
+
+class DemoRegistro(models.Model):
+    """Anota cada registro criado como demonstração, para poder apagar só eles depois."""
+
+    modelo = models.CharField(max_length=30)
+    obj_id = models.PositiveIntegerField()
+    criado_em = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "registro de demonstração"
+        verbose_name_plural = "registros de demonstração"
