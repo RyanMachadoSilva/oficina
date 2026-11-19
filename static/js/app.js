@@ -122,5 +122,34 @@ window.App = (function () {
   }
   function atraso(fn, ms) { let h; return (...a) => { clearTimeout(h); h = setTimeout(() => fn(...a), ms); }; }
 
+  /* Convite para instalar o app (PWA). O navegador só instala com um toque da pessoa, então mostramos o botão. */
+  (function () {
+    const faixa = $('#instalar'); if (!faixa) return;
+    const btn = $('#instalar-btn'), msg = $('#instalar-msg');
+    const instalado = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+    const dispensado = () => { try { return Date.now() - (+localStorage.getItem('instalar-dispensado') || 0) < 3 * 864e5; } catch (e) { return false; } };
+    const ua = navigator.userAgent;
+    const ios = /iphone|ipad|ipod/i.test(ua), android = /android/i.test(ua);
+    let pedido = null;
+    const mostrar = (texto, comBotao) => {
+      if (instalado() || dispensado()) return;
+      if (texto) msg.textContent = texto;
+      btn.hidden = !comBotao; faixa.hidden = false;
+    };
+    const esconder = () => { faixa.hidden = true; };
+    window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); pedido = e; mostrar(null, true); });
+    window.addEventListener('appinstalled', esconder);
+    btn.addEventListener('click', async () => {
+      if (!pedido) return;
+      pedido.prompt();
+      try { await pedido.userChoice; } catch (e) {}
+      pedido = null; esconder();
+    });
+    $('#instalar-fechar').addEventListener('click', () => { try { localStorage.setItem('instalar-dispensado', Date.now()); } catch (e) {} esconder(); });
+    if (ios) mostrar('No Safari, toque em Compartilhar e depois em "Adicionar à Tela de Início".', false);
+    // Android sem o convite automático do Chrome: explica o caminho pelo menu
+    else if (android) setTimeout(() => { if (!pedido) mostrar('No Chrome, toque no menu ⋮ e em "Instalar app" (ou Compartilhar → "Adicionar à tela inicial").', false); }, 5000);
+  })();
+
   return { $, esc, num, brl, toast, abrirModal, fecharModal, getJSON, postJSON, camposVeiculo, ligarCamposVeiculo, lerCamposVeiculo, veiculoPreenchido, copiar, teclasBusca, atraso };
 })();

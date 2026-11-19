@@ -53,6 +53,11 @@
 <div class="ov" id="ov"><div class="modal" id="modal"></div></div>
 <div class="toast" id="toast"></div>
 {% endblock %}
+<div class="instalar" id="instalar" hidden>
+  <div class="instalar-txt"><b>Instalar o app da oficina</b><span id="instalar-msg">Fica com ícone na tela e abre direto, sem a barra do navegador.</span></div>
+  <button type="button" class="pri" id="instalar-btn">Instalar</button>
+  <button type="button" class="sm" id="instalar-fechar" aria-label="Agora não">✕</button>
+</div>
 <script src="{% static 'js/app.js' %}"></script>
 {% block scripts %}{% endblock %}
 <script>if('serviceWorker' in navigator){navigator.serviceWorker.register('/sw.js').catch(function(){})}</script>
