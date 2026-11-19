@@ -175,6 +175,21 @@ class Pedido(models.Model):
                 return super().save(*args, **kwargs)
         return super().save(*args, **kwargs)
 
+    def mecanicos(self):
+        """Mecânicos que trabalharam no pedido (dos itens e o principal), sem repetir."""
+        vistos, lista = set(), []
+        for mec in [i.mecanico for i in self.itens.all()] + [self.mecanico]:
+            if mec and mec.pk not in vistos:
+                vistos.add(mec.pk)
+                lista.append(mec)
+        return lista
+
+    def mecanicos_nomes(self):
+        return ", ".join(m.nome for m in self.mecanicos())
+
+    def tem_mecanico_por_item(self):
+        return any(i.mecanico_id for i in self.itens.all())
+
     # ---- totais (calculados a partir dos itens) ----
     def totais(self):
         pecas = servicos = Decimal("0")
@@ -195,6 +210,8 @@ class ItemPedido(models.Model):
     descricao = models.CharField("descrição", max_length=150)
     quantidade = models.DecimalField(max_digits=10, decimal_places=2, default=1)
     preco_unitario = models.DecimalField("preço unitário", max_digits=10, decimal_places=2, default=0)
+    mecanico = models.ForeignKey(Mecanico, on_delete=models.SET_NULL, null=True, blank=True,
+                                 related_name="itens", verbose_name="mecânico")
     ordem = models.PositiveIntegerField(default=0)
 
     class Meta:

@@ -26,11 +26,11 @@
   <div class="row" style="justify-content:space-between;margin-bottom:10px">
     <div><div class="small" style="color:#5d635d">CLIENTE</div><b>{{ p.cliente.nome }}</b><div class="small">{{ p.cliente.telefone }}{% if p.cliente.documento %} · {{ p.cliente.documento }}{% endif %}</div></div>
     <div><div class="small" style="color:#5d635d">VEÍCULO</div><b>{% if p.veiculo %}{{ p.veiculo.modelo }} {{ p.veiculo.ano }}{% else %}—{% endif %}</b><div class="small">{{ p.veiculo.placa }}</div></div>
-    <div><div class="small" style="color:#5d635d">MECÂNICO</div><b>{{ p.mecanico.nome|default:"—" }}</b></div>
+    <div><div class="small" style="color:#5d635d">{% if p.mecanicos|length > 1 %}MECÂNICOS{% else %}MECÂNICO{% endif %}</div><b>{{ p.mecanicos_nomes|default:"—" }}</b></div>
   </div>
   <div class="scroll"><table>
-    <thead><tr><th>Descrição</th><th>Tipo</th><th class="r">Qtd</th><th class="r">Unitário</th><th class="r">Total</th></tr></thead>
-    <tbody>{% for i in p.itens.all %}<tr><td>{{ i.descricao }}</td><td><span class="tipo t-{{ i.tipo }}">{{ i.get_tipo_display }}</span></td><td class="r">{{ i.quantidade|num }}</td><td class="r">{{ i.preco_unitario|brl }}</td><td class="r">{{ i.total|brl }}</td></tr>{% endfor %}</tbody>
+    {% with por_item=p.tem_mecanico_por_item %}<thead><tr><th>Descrição</th><th>Tipo</th>{% if por_item %}<th>Mecânico</th>{% endif %}<th class="r">Qtd</th><th class="r">Unitário</th><th class="r">Total</th></tr></thead>
+    <tbody>{% for i in p.itens.all %}<tr><td>{{ i.descricao }}</td><td><span class="tipo t-{{ i.tipo }}">{{ i.get_tipo_display }}</span></td>{% if por_item %}<td>{{ i.mecanico.nome|default:"—" }}</td>{% endif %}<td class="r">{{ i.quantidade|num }}</td><td class="r">{{ i.preco_unitario|brl }}</td><td class="r">{{ i.total|brl }}</td></tr>{% endfor %}</tbody>{% endwith %}
   </table></div>
   <div class="tot">
     <div><span>Peças</span><span>{{ t.pecas|brl }}</span></div>

@@ -9,7 +9,7 @@
   <td data-l="Data">{{ p.data|date:"d/m/Y" }}</td>
   <td data-l="Cliente">{{ p.cliente.nome }}</td>
   <td data-l="Veículo">{{ p.veiculo|default:"—" }}</td>
-  <td data-l="Mecânico">{{ p.mecanico.nome|default:"—" }}</td>
+  <td data-l="Mecânico">{{ p.mecanicos_nomes|default:"—" }}</td>
   <td class="r" data-l="Total">{{ t.total|brl }}</td>
   <td data-l="Status"><span class="tag s-{{ p.status }}">{{ p.get_status_display }}</span></td>
 </tr>

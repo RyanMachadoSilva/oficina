@@ -4,8 +4,13 @@
   const estado = JSON.parse($('#estado').textContent);
   const issBase = JSON.parse($('#iss-base').textContent);
   const marcas = JSON.parse($('#marcas').textContent);
+  const mecanicos = JSON.parse($('#mecanicos').textContent);
+  const principal = () => +$('#mecanico_principal').value || null;
+  const opcoesMec = sel => '<option value="">—</option>' + mecanicos
+    .filter(m => m.ativo || m.id === sel)
+    .map(m => `<option value="${m.id}"${m.id === sel ? ' selected' : ''}>${esc(m.nome)}</option>`).join('');
   let cliente = estado.cliente, veiculos = estado.veiculos || [], veiculoId = estado.veiculo_id;
-  let itens = (estado.itens || []).map(i => ({ tipo: i.tipo || 'servico', descricao: i.descricao || '', quantidade: i.quantidade ?? 1, preco_unitario: i.preco_unitario ?? 0 }));
+  let itens = (estado.itens || []).map(i => ({ tipo: i.tipo || 'servico', descricao: i.descricao || '', quantidade: i.quantidade ?? 1, preco_unitario: i.preco_unitario ?? 0, mecanico_id: i.mecanico_id ? +i.mecanico_id : null }));
 
   /* ---------- cliente ---------- */
   function renderCliente() {
@@ -80,12 +85,13 @@
   /* ---------- itens ---------- */
   function linhas() {
     const tb = $('#itens');
-    if (!itens.length) { tb.innerHTML = '<tr><td colspan="6" class="empty">Nenhum item ainda. Busque acima ou adicione um item avulso.</td></tr>'; totais(); return; }
+    if (!itens.length) { tb.innerHTML = '<tr><td colspan="7" class="empty">Nenhum item ainda. Busque acima ou adicione um item avulso.</td></tr>'; totais(); return; }
     tb.innerHTML = itens.map((i, k) => `<tr>
       <td class="c-desc" data-l="Descrição"><input data-i="${k}" data-f="descricao" value="${esc(i.descricao)}" placeholder="Descrição" maxlength="150"></td>
       <td class="c-tipo" data-l="Tipo"><select data-i="${k}" data-f="tipo"><option value="peca"${i.tipo === 'peca' ? ' selected' : ''}>Peça</option><option value="servico"${i.tipo === 'servico' ? ' selected' : ''}>Serviço</option></select></td>
       <td class="c-qtd" data-l="Qtd"><input data-i="${k}" data-f="quantidade" inputmode="numeric" maxlength="2" value="${esc(String(parseInt(num(i.quantidade)) || 1))}" style="text-align:right"></td>
       <td class="c-preco" data-l="Unitário (R$)"><input data-i="${k}" data-f="preco_unitario" inputmode="decimal" maxlength="9" value="${esc(String(i.preco_unitario).replace('.', ','))}" style="text-align:right"></td>
+      <td class="c-mec" data-l="Mecânico"><select data-i="${k}" data-f="mecanico_id">${opcoesMec(i.mecanico_id)}</select></td>
       <td class="r c-total" id="lt${k}">${brl(num(i.quantidade) * num(i.preco_unitario))}</td>
       <td class="c-rm"><button type="button" class="sm del" data-rm="${k}" aria-label="Remover">✕</button></td></tr>`).join('');
     totais();
@@ -112,7 +118,18 @@
     const lt = $('#lt' + t.dataset.i); if (lt) lt.textContent = brl(num(i.quantidade) * num(i.preco_unitario));
     totais();
   });
-  $('#itens').addEventListener('change', e => { if (e.target.dataset.f === 'tipo') { itens[+e.target.dataset.i].tipo = e.target.value; totais(); } });
+  $('#itens').addEventListener('change', e => {
+    const t = e.target, i = itens[+t.dataset.i]; if (!i) return;
+    if (t.dataset.f === 'tipo') { i.tipo = t.value; totais(); }
+    if (t.dataset.f === 'mecanico_id') i.mecanico_id = +t.value || null;
+  });
+  // trocar o mecânico principal preenche os serviços que ainda estão sem mecânico
+  $('#mecanico_principal').addEventListener('change', () => {
+    const m = principal(); if (!m) return;
+    let mudou = false;
+    itens.forEach(i => { if (i.tipo === 'servico' && !i.mecanico_id) { i.mecanico_id = m; mudou = true; } });
+    if (mudou) linhas();
+  });
   $('#itens').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b) { itens.splice(+b.dataset.rm, 1); linhas(); } });
   $('#iss').addEventListener('input', totais);
 
@@ -129,10 +146,10 @@
     const j = await getJSON('/api/catalogo/?q=' + encodeURIComponent(q));
     box.innerHTML = j.resultados.map((x, k) => `<button type="button" class="aci${k ? '' : ' on'}" data-k="${k}"><span>${esc(x.descricao)} <span class="tipo t-${x.tipo}">${x.tipo === 'peca' ? 'Peça' : 'Serviço'}</span></span><b>${brl(x.preco)}</b></button>`).join('')
       + `<button type="button" class="aci add" data-avulso>+ Adicionar "${esc(q)}" como item avulso</button>`;
-    box.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { const x = j.resultados[+b.dataset.k]; adicionar({ tipo: x.tipo, descricao: x.descricao, quantidade: 1, preco_unitario: x.preco }); });
-    box.querySelector('[data-avulso]').onclick = () => adicionar({ tipo: 'peca', descricao: q, quantidade: 1, preco_unitario: 0 }, true);
+    box.querySelectorAll('[data-k]').forEach(b => b.onclick = () => { const x = j.resultados[+b.dataset.k]; adicionar({ tipo: x.tipo, descricao: x.descricao, quantidade: 1, preco_unitario: x.preco, mecanico_id: x.tipo === 'servico' ? principal() : null }); });
+    box.querySelector('[data-avulso]').onclick = () => adicionar({ tipo: 'peca', descricao: q, quantidade: 1, preco_unitario: 0, mecanico_id: null }, true);
   }, 150));
-  $('#btn-avulso').onclick = () => { itens.push({ tipo: 'peca', descricao: '', quantidade: 1, preco_unitario: 0 }); linhas(); $(`[data-i="${itens.length - 1}"][data-f="descricao"]`).focus(); };
+  $('#btn-avulso').onclick = () => { itens.push({ tipo: 'peca', descricao: '', quantidade: 1, preco_unitario: 0, mecanico_id: null }); linhas(); $(`[data-i="${itens.length - 1}"][data-f="descricao"]`).focus(); };
 
   /* ---------- envio ---------- */
   $('#form-pedido').addEventListener('submit', e => {

@@ -40,7 +40,8 @@ def so_letras_numeros(s):
 
 
 def pedidos_com_itens():
-    return Pedido.objects.select_related("cliente", "veiculo__modelo__marca", "mecanico").prefetch_related("itens")
+    return (Pedido.objects.select_related("cliente", "veiculo__modelo__marca", "mecanico")
+            .prefetch_related(Prefetch("itens", queryset=ItemPedido.objects.select_related("mecanico"))))
 
 
 def obter_ou_criar_modelo(marca_id, modelo_id, nova_marca, novo_modelo):
@@ -115,7 +116,7 @@ def filtrar_pedidos(params, qs):
     if f["cliente"]:
         qs = qs.filter(cliente_id=f["cliente"])
     if f["mecanico"]:
-        qs = qs.filter(mecanico_id=f["mecanico"])
+        qs = qs.filter(Q(mecanico_id=f["mecanico"]) | Q(itens__mecanico_id=f["mecanico"])).distinct()
     if f["de"]:
         qs = qs.filter(data__gte=f["de"])
     if f["ate"]:
@@ -145,6 +146,7 @@ def pedido_form(request, pk=None, duplicar_de=None):
         cliente = Cliente.objects.filter(pk=request.POST.get("cliente_id") or 0).first()
         veiculo = Veiculo.objects.filter(pk=request.POST.get("veiculo_id") or 0, cliente=cliente).first() if cliente else None
         mecanico = Mecanico.objects.filter(pk=request.POST.get("mecanico_id") or 0).first()
+        ids_mecanicos = set(Mecanico.objects.values_list("pk", flat=True))
         try:
             itens = json.loads(request.POST.get("itens_json") or "[]")
         except json.JSONDecodeError:
@@ -185,6 +187,8 @@ def pedido_form(request, pk=None, duplicar_de=None):
                         descricao=str(i["descricao"]).strip()[:150],
                         quantidade=dec(i.get("quantidade"), "1"),
                         preco_unitario=dec(i.get("preco_unitario"), "0"),
+                        mecanico_id=(int(i["mecanico_id"]) if str(i.get("mecanico_id") or "").isdigit()
+                                     and int(i["mecanico_id"]) in ids_mecanicos else None),
                     ) for n, i in enumerate(itens)
                 ])
                 if novo:
@@ -207,7 +211,8 @@ def pedido_form(request, pk=None, duplicar_de=None):
                 "veiculos": [veiculo_json(v) for v in origem.cliente.veiculos.select_related("modelo__marca")],
                 "veiculo_id": origem.veiculo_id,
                 "itens": [{"tipo": i.tipo, "descricao": i.descricao, "quantidade": str(i.quantidade.normalize()),
-                           "preco_unitario": str(i.preco_unitario)} for i in origem.itens.all()],
+                           "preco_unitario": str(i.preco_unitario), "mecanico_id": i.mecanico_id}
+                          for i in origem.itens.all()],
             }
             valores = {
                 "mecanico_id": str(origem.mecanico_id or ""),
@@ -229,6 +234,7 @@ def pedido_form(request, pk=None, duplicar_de=None):
         "pedido": pedido, "erros": erros, "valores": valores, "estado": estado,
         "mecanicos": Mecanico.objects.filter(ativo=True) | Mecanico.objects.filter(pk=(pedido.mecanico_id if pedido else 0)),
         "marcas": Marca.objects.all(),
+        "mecanicos_json": [{"id": m.pk, "nome": m.nome, "ativo": m.ativo} for m in Mecanico.objects.all()],
         "iss_base": pedido.iss_base if pedido else params.iss_base,
     })
 
@@ -411,11 +417,16 @@ def dados_relatorio(request):
             tot[k] += t[k]
         if p.status == Status.PAGO:
             tot["pago"] += t["total"]
-        nome = p.mecanico.nome if p.mecanico else "Sem mecânico"
-        m = por_mec.setdefault(nome, {"nome": nome, "qtd": 0, "servicos": Decimal("0"), "total": Decimal("0")})
-        m["qtd"] += 1
-        m["servicos"] += t["servicos"]
-        m["total"] += t["total"]
+        # cada item conta para o mecânico que fez; sem mecânico no item, vale o principal do pedido
+        vistos = set()
+        for i in p.itens.all():
+            mec = i.mecanico or p.mecanico
+            nome = mec.nome if mec else "Sem mecânico"
+            m = por_mec.setdefault(nome, {"nome": nome, "qtd": 0, "servicos": Decimal("0"), "pecas": Decimal("0")})
+            if nome not in vistos:
+                m["qtd"] += 1
+                vistos.add(nome)
+            m["servicos" if i.tipo == TipoItem.SERVICO else "pecas"] += i.total
     return f, lista, tot, sorted(por_mec.values(), key=lambda x: x["nome"])
 
 
@@ -440,10 +451,10 @@ def relatorios_csv(request):
     resp["Content-Disposition"] = f'attachment; filename="pedidos_{f["de"]}_{f["ate"]}.csv"'
     resp.write("﻿")  # BOM para o Excel abrir com acento certo
     w = csv.writer(resp, delimiter=";")
-    w.writerow(["Número", "Data", "Cliente", "CPF/CNPJ", "Veículo", "Mecânico", "Peças", "Serviços", "ISS", "Total", "Status"])
+    w.writerow(["Número", "Data", "Cliente", "CPF/CNPJ", "Veículo", "Mecânicos", "Peças", "Serviços", "ISS", "Total", "Status"])
     for p, t in lista:
         w.writerow([p.numero, f"{p.data:%d/%m/%Y}", p.cliente.nome, p.cliente.documento, str(p.veiculo or ""),
-                    p.mecanico.nome if p.mecanico else "", br(t["pecas"]), br(t["servicos"]), br(t["iss"]),
+                    p.mecanicos_nomes(), br(t["pecas"]), br(t["servicos"]), br(t["iss"]),
                     br(t["total"]), p.get_status_display()])
     w.writerow(["TOTAL", "", "", "", "", "", br(tot["pecas"]), br(tot["servicos"]), br(tot["iss"]), br(tot["total"]), ""])
     return resp

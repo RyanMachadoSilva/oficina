@@ -20,14 +20,14 @@
   <div class="card kpi g"><div class="l">Total</div><div class="n">{{ tot.total|brl }}</div></div>
   <div class="card kpi y"><div class="l">Já recebido (pagos)</div><div class="n">{{ tot.pago|brl }}</div></div>
 </div>
-<div class="card" style="margin-top:14px"><h2 style="margin-bottom:8px">Por mecânico</h2>
-  {% if por_mec %}<div class="scroll"><table class="stack"><thead><tr><th>Mecânico</th><th class="r">Pedidos</th><th class="r">Serviços</th><th class="r">Total dos pedidos</th><th class="r">A pagar</th></tr></thead><tbody>
-  {% for m in por_mec %}<tr><td data-l="Mecânico"><b>{{ m.nome }}</b></td><td class="r" data-l="Pedidos">{{ m.qtd }}</td><td class="r" data-l="Serviços">{{ m.servicos|brl }}</td><td class="r" data-l="Total">{{ m.total|brl }}</td><td class="r" data-l="A pagar"><span class="hl">regra a definir</span></td></tr>{% endfor %}
+<div class="card" style="margin-top:14px"><h2 style="margin-bottom:4px">Por mecânico</h2><p class="small mut" style="margin:0 0 8px">Cada item conta para o mecânico que fez. Item sem mecânico conta para o mecânico principal do pedido.</p>
+  {% if por_mec %}<div class="scroll"><table class="stack"><thead><tr><th>Mecânico</th><th class="r">Pedidos</th><th class="r">Serviços feitos</th><th class="r">Peças lançadas</th><th class="r">A pagar</th></tr></thead><tbody>
+  {% for m in por_mec %}<tr><td data-l="Mecânico"><b>{{ m.nome }}</b></td><td class="r" data-l="Pedidos">{{ m.qtd }}</td><td class="r" data-l="Serviços feitos">{{ m.servicos|brl }}</td><td class="r" data-l="Peças lançadas">{{ m.pecas|brl }}</td><td class="r" data-l="A pagar"><span class="hl">regra a definir</span></td></tr>{% endfor %}
   </tbody></table></div>{% else %}<div class="empty">Sem pedidos no período.</div>{% endif %}
 </div>
 <div class="card" style="margin-top:14px"><h2 style="margin-bottom:8px">Pedidos do período</h2>
   {% if lista %}<div class="scroll"><table class="stack"><thead><tr><th>Número</th><th>Data</th><th>Cliente</th><th>Mecânico</th><th class="r">Peças</th><th class="r">Serviços</th><th class="r">ISS</th><th class="r">Total</th><th>Status</th></tr></thead><tbody>
-  {% for p, t in lista %}<tr class="click" data-href="{% url 'pedido_detalhe' p.pk %}"><td data-l="Número"><b>{{ p.numero }}</b></td><td data-l="Data">{{ p.data|date:"d/m/Y" }}</td><td data-l="Cliente">{{ p.cliente.nome }}</td><td data-l="Mecânico">{{ p.mecanico.nome|default:"—" }}</td>
+  {% for p, t in lista %}<tr class="click" data-href="{% url 'pedido_detalhe' p.pk %}"><td data-l="Número"><b>{{ p.numero }}</b></td><td data-l="Data">{{ p.data|date:"d/m/Y" }}</td><td data-l="Cliente">{{ p.cliente.nome }}</td><td data-l="Mecânico">{{ p.mecanicos_nomes|default:"—" }}</td>
     <td class="r" data-l="Peças">{{ t.pecas|brl }}</td><td class="r" data-l="Serviços">{{ t.servicos|brl }}</td><td class="r" data-l="ISS">{{ t.iss|brl }}</td><td class="r" data-l="Total"><b>{{ t.total|brl }}</b></td>
     <td data-l="Status"><span class="tag s-{{ p.status }}">{{ p.get_status_display }}</span></td></tr>{% endfor %}
   </tbody></table></div>{% else %}<div class="empty">Nenhum pedido com esses filtros.</div>{% endif %}
