@@ -126,7 +126,7 @@
       <td class="c-desc" data-l="Descrição"><input data-g="${gi}" data-i="${k}" data-f="descricao" value="${esc(i.descricao)}" placeholder="Descrição" maxlength="150"></td>
       <td class="c-tipo" data-l="Tipo"><select data-g="${gi}" data-i="${k}" data-f="tipo"><option value="peca"${i.tipo === 'peca' ? ' selected' : ''}>Peça</option><option value="servico"${i.tipo === 'servico' ? ' selected' : ''}>Serviço</option></select></td>
       <td class="c-qtd" data-l="Qtd"><input data-g="${gi}" data-i="${k}" data-f="quantidade" inputmode="numeric" maxlength="2" value="${esc(String(parseInt(num(i.quantidade)) || 1))}" style="text-align:right"></td>
-      <td class="c-preco" data-l="Unitário (R$)"><input data-g="${gi}" data-i="${k}" data-f="preco_unitario" inputmode="decimal" maxlength="9" value="${esc(String(i.preco_unitario).replace('.', ','))}" style="text-align:right"></td>
+      <td class="c-preco" data-l="Unitário (R$)"><input data-g="${gi}" data-i="${k}" data-f="preco_unitario" inputmode="decimal" maxlength="9" placeholder="0,00" value="${num(i.preco_unitario) ? esc(String(i.preco_unitario).replace('.', ',')) : ''}" style="text-align:right"></td>
       <td class="r c-total" data-lt="${gi}-${k}">${brl(num(i.quantidade) * num(i.preco_unitario))}</td>
       <td class="c-rm"><button type="button" class="sm del" data-rm="${gi}-${k}" aria-label="Remover">✕</button></td></tr>`).join('');
   }
@@ -155,6 +155,11 @@
     const i = grupos[+t.dataset.g].itens[+t.dataset.i]; i[t.dataset.f] = t.value;
     const lt = document.querySelector(`[data-lt="${t.dataset.g}-${t.dataset.i}"]`); if (lt) lt.textContent = brl(num(i.quantidade) * num(i.preco_unitario));
     totais();
+  });
+  // ao tocar em quantidade ou preço, seleciona o valor: o que for digitado já substitui
+  grp.addEventListener('focusin', e => {
+    const t = e.target;
+    if (t.dataset.f === 'quantidade' || t.dataset.f === 'preco_unitario') setTimeout(() => { try { t.select(); } catch (er) {} }, 0);
   });
   grp.addEventListener('change', e => {
     const t = e.target;
