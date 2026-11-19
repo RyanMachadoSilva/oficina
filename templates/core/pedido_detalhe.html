@@ -5,7 +5,8 @@
   <p><a href="{% url 'pedidos' %}">← Voltar para pedidos</a></p></div>
   <div class="row">
     <button type="button" onclick="window.print()">Imprimir / PDF</button>
-    <button type="button" data-copiar="txt-zap" data-ok="Texto copiado. É só colar no WhatsApp.">Copiar p/ WhatsApp</button>
+    <button type="button" class="pri" id="btn-imagem" data-arquivo="orcamento-{{ p.numero }}.png" data-texto="Orçamento {{ p.numero }} - {{ EMPRESA_NOME }}">Enviar imagem</button>
+    <button type="button" data-copiar="txt-zap" data-ok="Texto copiado. É só colar no WhatsApp.">Copiar texto</button>
     <a class="btn" href="{% url 'pedido_duplicar' p.pk %}">Duplicar</a>
     <a class="btn pri" href="{% url 'pedido_editar' p.pk %}">Editar</a>
   </div>
@@ -62,4 +63,61 @@
   </div>
 </div>
 <textarea id="txt-zap" hidden>{{ texto_whatsapp }}</textarea>
+{% endblock %}
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+/* Gera uma imagem do orçamento e abre o compartilhar do celular (WhatsApp etc.) */
+(function () {
+  const btn = document.getElementById('btn-imagem'); if (!btn) return;
+  const { abrirModal, fecharModal, toast } = App;
+  let arquivo = null;
+
+  async function gerar() {
+    // copia o documento numa largura fixa, para a imagem sair igual no celular e no PC
+    const caixa = document.createElement('div');
+    caixa.style.cssText = 'position:absolute;left:-10000px;top:0;width:760px;background:#fff';
+    const doc = document.querySelector('.doc').cloneNode(true);
+    doc.style.border = '0';
+    caixa.appendChild(doc); document.body.appendChild(caixa);
+    try {
+      const canvas = await html2canvas(doc, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false });
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/png'));
+      return new File([blob], btn.dataset.arquivo, { type: 'image/png' });
+    } finally { caixa.remove(); }
+  }
+  function baixar(f) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(f); a.download = f.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    toast('Imagem salva. Agora é só anexar no WhatsApp.');
+  }
+  async function compartilhar(f) {
+    if (navigator.canShare && navigator.canShare({ files: [f] })) {
+      await navigator.share({ files: [f], title: btn.dataset.texto, text: btn.dataset.texto });
+      return true;
+    }
+    baixar(f); return true;
+  }
+
+  btn.addEventListener('click', async () => {
+    if (typeof html2canvas === 'undefined') { toast('Sem conexão para gerar a imagem. Tente de novo.'); return; }
+    const txt = btn.textContent; btn.disabled = true; btn.textContent = 'Gerando...';
+    try {
+      arquivo = await gerar();
+      try { await compartilhar(arquivo); }
+      catch (e) {
+        if (e.name === 'AbortError') return; // a pessoa fechou o compartilhar
+        // o navegador pediu um toque novo: mostra a imagem com o botão de compartilhar
+        const url = URL.createObjectURL(arquivo);
+        abrirModal('Imagem do orçamento', `<img src="${url}" alt="Imagem do orçamento" style="width:100%;border:1px solid var(--line);border-radius:8px">`,
+          '<button type="button" data-fechar>Fechar</button><button type="button" id="img-baixar">Salvar imagem</button><button type="button" class="pri" id="img-compartilhar">Compartilhar</button>');
+        document.getElementById('img-compartilhar').onclick = () => compartilhar(arquivo).then(fecharModal).catch(() => {});
+        document.getElementById('img-baixar').onclick = () => baixar(arquivo);
+      }
+    } catch (e) {
+      toast('Não consegui gerar a imagem. Tente de novo.');
+    } finally { btn.disabled = false; btn.textContent = txt; }
+  });
+})();
+</script>
 {% endblock %}
