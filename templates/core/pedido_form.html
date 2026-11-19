@@ -7,24 +7,22 @@
 <form method="post" id="form-pedido">{% csrf_token %}
 <input type="hidden" name="cliente_id" id="cliente_id">
 <input type="hidden" name="itens_json" id="itens_json">
+<input type="hidden" name="mecanico_id" id="mecanico_principal" value="{{ valores.mecanico_id }}">
 <div class="card"><div class="f">
   <div class="w2"><span class="lb">Cliente</span><div id="cliente-box"></div></div>
   <div class="w2"><span class="lb">Veículo</span>
     <div class="row" style="flex-wrap:nowrap;gap:6px"><select name="veiculo_id" id="veiculo_id"></select>
     <button type="button" id="btn-veiculo" style="margin-top:4px">+ Veículo</button></div></div>
-  <label>Mecânico principal<select name="mecanico_id" id="mecanico_principal"><option value="">Selecione</option>
-    {% for m in mecanicos %}<option value="{{ m.pk }}"{% if valores.mecanico_id == m.pk|stringformat:"s" %} selected{% endif %}>{{ m.nome }}</option>{% endfor %}</select></label>
+  <label>Vendedor (quem atendeu)<select name="vendedor_id"><option value="">Selecione</option>
+    {% for m in mecanicos %}<option value="{{ m.pk }}"{% if valores.vendedor_id == m.pk|stringformat:"s" %} selected{% endif %}>{{ m.nome }}</option>{% endfor %}</select></label>
   <label>Data<input type="date" name="data" value="{{ valores.data }}"{% if pedido %} disabled{% endif %}></label>
   <label>Válido até<input type="date" name="validade" value="{{ valores.validade }}"></label>
 </div></div>
 
 <div class="card" style="margin-top:14px"><h2 style="margin-bottom:4px">Peças e serviços</h2>
-  <p class="small mut" style="margin:0 0 10px">Cada serviço já vem com o mecânico principal. Se outro mecânico fez parte do trabalho, troque o mecânico na linha.</p>
-  <div class="bar" style="align-items:flex-end"><div style="flex:3 1 260px"><span class="lb">Buscar peça ou serviço</span>
-    <div class="ac"><input id="item-busca" autocomplete="off" placeholder="Ex.: pastilha, alinhamento, óleo"><div class="acl" id="item-res"></div></div></div>
-    <button type="button" id="btn-avulso">+ Item avulso</button></div>
-  <div class="scroll"><table class="itens-tab"><thead><tr><th>Descrição</th><th>Tipo</th><th class="r" style="width:90px">Qtd</th><th class="r" style="width:130px">Unitário (R$)</th><th>Mecânico</th><th class="r">Total</th><th></th></tr></thead>
-  <tbody id="itens"></tbody></table></div>
+  <p class="small mut" style="margin:0 0 12px">Cada mecânico tem o seu quadro com o que ele fez. Se dois mecânicos trabalharam no carro, use "+ Adicionar outro mecânico".</p>
+  <div id="grupos"></div>
+  <button type="button" id="btn-grupo" style="margin-top:10px">+ Adicionar outro mecânico</button>
   <div class="grid g2" style="margin-top:6px;align-items:start">
     <div><label>Observações<textarea name="observacao" placeholder="Ex.: cliente vai trazer a peça">{{ valores.observacao }}</textarea></label>
       <label style="max-width:160px;margin-top:10px">ISS (%)<input name="iss_percentual" id="iss" inputmode="decimal" value="{{ valores.iss_percentual }}"></label></div>

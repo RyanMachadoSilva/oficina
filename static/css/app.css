@@ -112,12 +112,12 @@ a{color:var(--g)}
 .itens-tab tr{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr) minmax(0,1.4fr);gap:8px 10px;padding:12px 0;border-bottom:1px solid var(--line)}
 .itens-tab td{border:0;padding:0}
 .itens-tab td[data-l]::before{content:attr(data-l);display:block;font-size:13px;font-weight:600;color:var(--mut);margin-bottom:2px}
-.itens-tab .c-desc,.itens-tab td.empty,.itens-tab .c-mec{grid-column:1/-1}
+.itens-tab .c-desc,.itens-tab td.empty{grid-column:1/-1}
 .itens-tab .c-total{grid-column:1/3;align-self:center;text-align:left;font-weight:700;font-size:17px}
 .itens-tab .c-rm{align-self:center;text-align:right}
 .itens-tab input,.itens-tab select{margin-top:0}
 }
-@media(min-width:701px){.itens-tab .c-desc{min-width:240px;width:45%}.itens-tab .c-tipo select{min-width:112px}.itens-tab .c-qtd input{width:70px}.itens-tab .c-mec select{min-width:130px}}
+@media(min-width:701px){.itens-tab .c-desc{min-width:240px;width:45%}.itens-tab .c-tipo select{min-width:112px}.itens-tab .c-qtd input{width:70px}}
 
 /* ---- barra do topo, menu lateral (☰) e botão flutuante ---- */
 .topo{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;height:56px;padding:0 10px;background:var(--side);color:#fff;border-bottom:1px solid #222}
@@ -150,3 +150,10 @@ html.menu-fechado aside{display:none}
 @media(max-width:600px){.stack .cel{align-items:flex-end;text-align:right}}
 /* dentro do documento as variáveis de cor ficam sempre no tema claro */
 .doc{--ink:#151715;--mut:#5d635d;--line:#dfe2dc;--g2:#e3f1e2}
+
+/* quadros por mecânico no orçamento */
+.grupo{border:1px solid var(--line);border-left:4px solid var(--g);border-radius:10px;padding:12px 14px;margin-bottom:12px}
+.grupo + .grupo{border-left-color:var(--y)}
+.grupo-topo{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end;justify-content:space-between;margin-bottom:10px}
+.grupo-topo label{flex:1 1 220px;max-width:360px}
+.grupo-sub{text-align:right;margin-top:8px;font-size:15px}

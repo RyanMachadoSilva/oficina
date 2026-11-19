@@ -149,6 +149,8 @@ class Pedido(models.Model):
     cliente = models.ForeignKey(Cliente, on_delete=models.PROTECT, related_name="pedidos")
     veiculo = models.ForeignKey(Veiculo, on_delete=models.PROTECT, related_name="pedidos", null=True, blank=True)
     mecanico = models.ForeignKey(Mecanico, on_delete=models.PROTECT, related_name="pedidos", null=True, blank=True)
+    vendedor = models.ForeignKey(Mecanico, on_delete=models.SET_NULL, related_name="vendas", null=True, blank=True,
+                                 help_text="Quem atendeu o cliente")
     status = models.CharField(max_length=12, choices=Status.choices, default=Status.ORCAMENTO, db_index=True)
     iss_percentual = models.DecimalField("ISS (%)", max_digits=5, decimal_places=2, default=Decimal("5"))
     iss_base = models.CharField(max_length=10, choices=Parametros.BASES_ISS, default=Parametros.BASE_TUDO)

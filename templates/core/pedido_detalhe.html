@@ -26,11 +26,20 @@
   <div class="row" style="justify-content:space-between;margin-bottom:10px">
     <div><div class="small" style="color:#5d635d">CLIENTE</div><b>{{ p.cliente.nome }}</b><div class="small">{{ p.cliente.telefone }}{% if p.cliente.documento %} · {{ p.cliente.documento }}{% endif %}</div></div>
     <div><div class="small" style="color:#5d635d">VEÍCULO</div><b>{% if p.veiculo %}{{ p.veiculo.modelo }} {{ p.veiculo.ano }}{% else %}—{% endif %}</b><div class="small">{{ p.veiculo.placa }}</div></div>
-    <div><div class="small" style="color:#5d635d">{% if p.mecanicos|length > 1 %}MECÂNICOS{% else %}MECÂNICO{% endif %}</div><b>{{ p.mecanicos_nomes|default:"—" }}</b></div>
+    <div><div class="small" style="color:#5d635d">{% if p.mecanicos|length > 1 %}MECÂNICOS{% else %}MECÂNICO{% endif %}</div><b>{{ p.mecanicos_nomes|default:"—" }}</b>
+      {% if p.vendedor %}<div class="small">Atendimento: {{ p.vendedor.nome }}</div>{% endif %}</div>
   </div>
   <div class="scroll"><table>
-    {% with por_item=p.tem_mecanico_por_item %}<thead><tr><th>Descrição</th><th>Tipo</th>{% if por_item %}<th>Mecânico</th>{% endif %}<th class="r">Qtd</th><th class="r">Unitário</th><th class="r">Total</th></tr></thead>
-    <tbody>{% for i in p.itens.all %}<tr><td>{{ i.descricao }}</td><td><span class="tipo t-{{ i.tipo }}">{{ i.get_tipo_display }}</span></td>{% if por_item %}<td>{{ i.mecanico.nome|default:"—" }}</td>{% endif %}<td class="r">{{ i.quantidade|num }}</td><td class="r">{{ i.preco_unitario|brl }}</td><td class="r">{{ i.total|brl }}</td></tr>{% endfor %}</tbody>{% endwith %}
+    <thead><tr><th>Descrição</th><th>Tipo</th><th class="r">Qtd</th><th class="r">Unitário</th><th class="r">Total</th></tr></thead>
+    {% if grupos %}
+      {% for g in grupos %}<tbody>
+        <tr><td colspan="5" style="padding-top:14px;border-bottom:2px solid #dfe2dc"><b>{{ g.mecanico.nome|default:"Sem mecânico" }}</b></td></tr>
+        {% for i in g.itens %}<tr><td>{{ i.descricao }}</td><td><span class="tipo t-{{ i.tipo }}">{{ i.get_tipo_display }}</span></td><td class="r">{{ i.quantidade|num }}</td><td class="r">{{ i.preco_unitario|brl }}</td><td class="r">{{ i.total|brl }}</td></tr>{% endfor %}
+        <tr><td colspan="4" class="r" style="color:#5d635d">Subtotal {{ g.mecanico.nome|default:"sem mecânico" }}</td><td class="r"><b>{{ g.subtotal|brl }}</b></td></tr>
+      </tbody>{% endfor %}
+    {% else %}
+      <tbody>{% for i in p.itens.all %}<tr><td>{{ i.descricao }}</td><td><span class="tipo t-{{ i.tipo }}">{{ i.get_tipo_display }}</span></td><td class="r">{{ i.quantidade|num }}</td><td class="r">{{ i.preco_unitario|brl }}</td><td class="r">{{ i.total|brl }}</td></tr>{% endfor %}</tbody>
+    {% endif %}
   </table></div>
   <div class="tot">
     <div><span>Peças</span><span>{{ t.pecas|brl }}</span></div>

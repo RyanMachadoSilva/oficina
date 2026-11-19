@@ -40,7 +40,7 @@ def so_letras_numeros(s):
 
 
 def pedidos_com_itens():
-    return (Pedido.objects.select_related("cliente", "veiculo__modelo__marca", "mecanico")
+    return (Pedido.objects.select_related("cliente", "veiculo__modelo__marca", "mecanico", "vendedor")
             .prefetch_related(Prefetch("itens", queryset=ItemPedido.objects.select_related("mecanico"))))
 
 
@@ -146,6 +146,7 @@ def pedido_form(request, pk=None, duplicar_de=None):
         cliente = Cliente.objects.filter(pk=request.POST.get("cliente_id") or 0).first()
         veiculo = Veiculo.objects.filter(pk=request.POST.get("veiculo_id") or 0, cliente=cliente).first() if cliente else None
         mecanico = Mecanico.objects.filter(pk=request.POST.get("mecanico_id") or 0).first()
+        vendedor = Mecanico.objects.filter(pk=request.POST.get("vendedor_id") or 0).first()
         ids_mecanicos = set(Mecanico.objects.values_list("pk", flat=True))
         try:
             itens = json.loads(request.POST.get("itens_json") or "[]")
@@ -166,7 +167,7 @@ def pedido_form(request, pk=None, duplicar_de=None):
             with transaction.atomic():
                 novo = pedido is None
                 p = pedido or Pedido(criado_por=request.user, iss_base=params.iss_base)
-                p.cliente, p.veiculo, p.mecanico = cliente, veiculo, mecanico
+                p.cliente, p.veiculo, p.mecanico, p.vendedor = cliente, veiculo, mecanico, vendedor
                 if novo:
                     try:
                         p.data = date.fromisoformat(request.POST.get("data", ""))
@@ -216,6 +217,7 @@ def pedido_form(request, pk=None, duplicar_de=None):
             }
             valores = {
                 "mecanico_id": str(origem.mecanico_id or ""),
+                "vendedor_id": str(origem.vendedor_id or ""),
                 "data": (origem.data if pedido else hoje).isoformat(),
                 "validade": (origem.validade.isoformat() if pedido and origem.validade
                              else (hoje + timedelta(days=params.validade_dias)).isoformat()),
@@ -225,7 +227,7 @@ def pedido_form(request, pk=None, duplicar_de=None):
         else:
             estado = {"cliente": None, "veiculos": [], "veiculo_id": None, "itens": []}
             valores = {
-                "mecanico_id": "", "data": hoje.isoformat(),
+                "mecanico_id": "", "vendedor_id": "", "data": hoje.isoformat(),
                 "validade": (hoje + timedelta(days=params.validade_dias)).isoformat(),
                 "iss_percentual": str(params.iss_percentual.normalize()), "observacao": "",
             }
@@ -256,8 +258,16 @@ def pedido_detalhe(request, pk):
     linhas += ["", f"Subtotal: {brl(t['subtotal'])}", f"ISS {num(p.iss_percentual)}%: {brl(t['iss'])}", f"*Total: {brl(t['total'])}*"]
     if p.validade:
         linhas.append(f"Válido até {p.validade:%d/%m/%Y}")
+    # itens separados por mecânico (só quando mais de um mecânico trabalhou)
+    grupos = {}
+    for i in p.itens.all():
+        mec = i.mecanico or p.mecanico
+        g = grupos.setdefault(mec.pk if mec else 0, {"mecanico": mec, "itens": [], "subtotal": Decimal("0")})
+        g["itens"].append(i)
+        g["subtotal"] += i.total
+    grupos = list(grupos.values()) if len(grupos) > 1 else []
     return render(request, "core/pedido_detalhe.html", {
-        "p": p, "t": t, "status_opcoes": Status.choices, "texto_whatsapp": "\n".join(linhas),
+        "p": p, "t": t, "grupos": grupos, "status_opcoes": Status.choices, "texto_whatsapp": "\n".join(linhas),
     })
 
 
@@ -451,12 +461,13 @@ def relatorios_csv(request):
     resp["Content-Disposition"] = f'attachment; filename="pedidos_{f["de"]}_{f["ate"]}.csv"'
     resp.write("﻿")  # BOM para o Excel abrir com acento certo
     w = csv.writer(resp, delimiter=";")
-    w.writerow(["Número", "Data", "Cliente", "CPF/CNPJ", "Veículo", "Mecânicos", "Peças", "Serviços", "ISS", "Total", "Status"])
+    w.writerow(["Número", "Data", "Cliente", "CPF/CNPJ", "Veículo", "Vendedor", "Mecânicos", "Peças", "Serviços", "ISS", "Total", "Status"])
     for p, t in lista:
         w.writerow([p.numero, f"{p.data:%d/%m/%Y}", p.cliente.nome, p.cliente.documento, str(p.veiculo or ""),
+                    p.vendedor.nome if p.vendedor else "",
                     p.mecanicos_nomes(), br(t["pecas"]), br(t["servicos"]), br(t["iss"]),
                     br(t["total"]), p.get_status_display()])
-    w.writerow(["TOTAL", "", "", "", "", "", br(tot["pecas"]), br(tot["servicos"]), br(tot["iss"]), br(tot["total"]), ""])
+    w.writerow(["TOTAL", "", "", "", "", "", "", br(tot["pecas"]), br(tot["servicos"]), br(tot["iss"]), br(tot["total"]), ""])
     return resp
 
 
